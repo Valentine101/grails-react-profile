@@ -1,0 +1,10 @@
+name: grails-react
+description: Grails 7 + React 19 + Vite 6 + TypeScript + Tailwind v4 SPA profile
+extends:
+    - org.apache.grails.profiles:base:7.0.4
+repositories:
+    - mavenCentral
+build:
+    excludes:
+        - frontend/node_modules/**
+        - src/main/resources/public/**

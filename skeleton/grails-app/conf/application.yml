@@ -1,0 +1,80 @@
+---
+grails:
+    profile: web
+    codegen:
+        defaultPackage: '@grails.codegen.defaultPackage@'
+info:
+    app:
+        name: '@info.app.name@'
+        version: '@info.app.version@'
+        grailsVersion: '@info.app.grailsVersion@'
+spring:
+    web:
+        resources:
+            static-locations: classpath:/public/
+            cache:
+                period: 31536000
+    jmx:
+        unique-names: true
+    main:
+        banner-mode: "off"
+    devtools:
+        restart:
+            additional-exclude:
+                - 'logback-spring.xml'
+                - '*.properties'
+environments:
+    development:
+        management:
+            endpoints:
+                enabled-by-default: true
+                web:
+                    base-path: '/actuator'
+                    exposure:
+                        include: '*'
+    production:
+        management:
+            endpoints:
+                enabled-by-default: false
+
+---
+grails:
+    mime:
+        disable:
+            accept:
+                header:
+                    userAgents:
+                        - Gecko
+                        - WebKit
+                        - Presto
+                        - Trident
+        types:
+            all: '*/*'
+            atom: application/atom+xml
+            css: text/css
+            csv: text/csv
+            form: application/x-www-form-urlencoded
+            html:
+              - text/html
+              - application/xhtml+xml
+            js: text/javascript
+            json:
+              - application/json
+              - text/json
+            multipartForm: multipart/form-data
+            pdf: application/pdf
+            rss: application/rss+xml
+            text: text/plain
+            hal:
+              - application/hal+json
+              - application/hal+xml
+            xml:
+              - text/xml
+              - application/xml
+    urlmapping:
+        cache:
+            maxsize: 1000
+    controllers:
+        defaultScope: singleton
+    converters:
+        encoding: UTF-8

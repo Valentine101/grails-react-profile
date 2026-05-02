@@ -1,0 +1,72 @@
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven { url = 'https://repo.grails.org/grails/restricted' }
+        maven { url = 'https://repository.apache.org/content/groups/public' }
+    }
+    dependencies {
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
+        classpath "org.apache.grails:grails-gradle-plugins"
+    }
+}
+
+apply plugin: "org.apache.grails.gradle.grails-profile"
+apply plugin: "maven-publish"
+
+group = 'io.github.valentine101'
+version = '1.0.0'
+
+// Exclude generated/installed frontend artifacts from the profile JAR.
+// node_modules/ alone bloats the JAR by ~30MB; src/main/resources/public/
+// is the Vite build output that should be regenerated per-app.
+tasks.named('jar') {
+    exclude 'META-INF/grails-profile/skeleton/frontend/node_modules/**'
+    exclude 'META-INF/grails-profile/skeleton/src/main/resources/public/**'
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.grails.org/grails/restricted' }
+    maven { url = 'https://repository.apache.org/content/groups/public' }
+}
+
+dependencies {
+    profileRuntimeApi platform("org.apache.grails:grails-bom:$grailsVersion")
+    profileRuntimeApi "org.apache.grails.profiles:base"
+
+    testImplementation platform("org.apache.grails:grails-bom:$grailsVersion")
+    testImplementation "org.apache.groovy:groovy"
+    testImplementation "org.spockframework:spock-core"
+}
+
+publishing {
+    publications {
+        profile(MavenPublication) {
+            from components.java
+            groupId = project.group
+            artifactId = 'grails-react'
+            version = project.version
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
+// profileBundle: produces a zip containing the profile JAR + install.sh helper
+// for distribution via GitHub releases.
+tasks.register('profileBundle', Zip) {
+    dependsOn(tasks.named('jar'))
+    archiveBaseName = 'grails-react-profile'
+    archiveVersion = project.version
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+
+    from(tasks.named('jar').map { it.archiveFile }) {
+        rename { 'grails-react-' + project.version + '.jar' }
+    }
+    from(layout.projectDirectory.file('install.sh')) {
+        // executable bit preserved
+    }
+    from(layout.projectDirectory.file('README.md'))
+}

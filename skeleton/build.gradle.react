@@ -1,0 +1,104 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url "https://repo.grails.org/grails/restricted" }
+        maven {
+           url = 'https://repository.apache.org/content/groups/snapshots'
+           content {
+              includeVersionByRegex('org[.]apache[.](grails|groovy).*', '.*', '.*-SNAPSHOT')
+           }
+        }
+    }
+    dependencies {
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
+        classpath "org.apache.grails:grails-gradle-plugins"
+        classpath "com.github.node-gradle:gradle-node-plugin:$nodePluginVersion"
+    }
+}
+
+version = "0.1"
+group = "@grails.codegen.defaultPackage@"
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"war"
+apply plugin:"org.apache.grails.gradle.grails-web"
+apply plugin:"com.github.node-gradle.node"
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.grails.org/grails/restricted" }
+    maven {
+       url = 'https://repository.apache.org/content/groups/snapshots'
+       content {
+          includeVersionByRegex('org[.]apache[.](grails|groovy).*', '.*', '.*-SNAPSHOT')
+       }
+    }
+}
+
+dependencies {
+    console "org.apache.grails:grails-console"
+    developmentOnly "org.springframework.boot:spring-boot-devtools"
+    implementation platform("org.apache.grails:grails-bom:$grailsVersion")
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-starter-validation"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.springframework.boot:spring-boot-starter"
+    implementation "org.apache.grails:grails-core"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
+    implementation "org.apache.grails:grails-web-boot"
+    implementation "org.apache.grails:grails-logging"
+    implementation "org.apache.grails:grails-rest-transforms"
+    implementation "org.apache.grails:grails-databinding"
+    implementation "org.apache.grails:grails-services"
+    implementation "org.apache.grails:grails-url-mappings"
+    implementation "org.apache.grails:grails-interceptors"
+    profile "org.apache.grails.profiles:web"
+    runtimeOnly "org.fusesource.jansi:jansi"
+    testImplementation "org.apache.grails:grails-testing-support-datamapping"
+    testImplementation "org.spockframework:spock-core"
+    testImplementation "org.apache.grails:grails-testing-support-web"
+}
+
+compileJava.options.release = javaVersion.toInteger()
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+node {
+    version = nodeVersion
+    npmVersion = project.findProperty('npmVersion') ?: '10.9.2'
+    download = true
+    nodeProjectDir = file("${projectDir}/frontend")
+}
+
+tasks.register('npmCiInstall', com.github.gradle.node.npm.task.NpmTask) {
+    args = ["ci"]
+    inputs.file("${projectDir}/frontend/package.json")
+    inputs.file("${projectDir}/frontend/package-lock.json")
+    outputs.dir("${projectDir}/frontend/node_modules")
+}
+
+tasks.register('buildFrontend', com.github.gradle.node.npm.task.NpmTask) {
+    dependsOn('npmCiInstall')
+    args = ["run", "build"]
+    inputs.dir("${projectDir}/frontend/src")
+    inputs.file("${projectDir}/frontend/index.html")
+    inputs.file("${projectDir}/frontend/vite.config.ts")
+    inputs.file("${projectDir}/frontend/package.json")
+    outputs.dir("${projectDir}/src/main/resources/public")
+}
+
+tasks.register('watchFrontend', com.github.gradle.node.npm.task.NpmTask) {
+    dependsOn('npmCiInstall')
+    args = ["run", "build:watch"]
+}
+
+tasks.register('cleanFrontend', Delete) {
+    delete "${projectDir}/src/main/resources/public"
+}
+
+clean.dependsOn('cleanFrontend')
+processResources.dependsOn('buildFrontend')
