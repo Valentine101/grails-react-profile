@@ -10,7 +10,12 @@ class UrlMappings {
         }
 
         "/"(controller: "app", action: "index")
-        "500"(view:'/error')
-        "404"(view:'/notFound')
+
+        // Note: no "404"/"500" view mappings here. The inherited web profile
+        // drops notFound.gsp/error.gsp into grails-app/views/, but this
+        // profile does NOT include the GSP plugin/runtime, so referencing
+        // those views would throw ServletException on every 404 (e.g.
+        // /favicon.ico). Spring Boot's default error handling produces
+        // sensible 404/500 responses without GSP.
     }
 }

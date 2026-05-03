@@ -112,6 +112,19 @@ class ProfileSmokeSpec extends Specification {
         text.contains('Frontend not built')
     }
 
+    def "UrlMappings does NOT reference GSP error views"() {
+        // Regression guard for v1.0.0 bug: the GSP `/notFound` and `/error`
+        // view mappings caused ServletException on every 404 because this
+        // profile doesn't include the GSP runtime. Removed in v1.0.1.
+        given:
+        def packageDir = '@grails.codegen.defaultPackage.path@'
+        def text = new File(SKELETON, "grails-app/controllers/${packageDir}/UrlMappings.groovy").text
+
+        expect:
+        !text.contains("view:'/notFound'")
+        !text.contains("view:'/error'")
+    }
+
     def "frontend skeleton has all expected files"() {
         expect:
         new File(SKELETON, 'frontend/package.json').exists()
