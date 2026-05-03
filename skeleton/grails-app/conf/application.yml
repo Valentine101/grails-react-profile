@@ -23,6 +23,14 @@ spring:
             additional-exclude:
                 - 'logback-spring.xml'
                 - '*.properties'
+server:
+    error:
+        # Spring Boot content-negotiates error responses: HTML for browsers,
+        # JSON for `Accept: application/json` (typical fetch/axios). These
+        # settings tighten the JSON shape so React clients can rely on it
+        # without leaking Java stack traces in production.
+        include-stacktrace: never
+        include-message: always
 environments:
     development:
         management:

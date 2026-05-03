@@ -69,6 +69,18 @@ class ProfileSmokeSpec extends Specification {
         text.contains("@grails.codegen.defaultPackage@")
     }
 
+    def "skeleton application.yml hardens error responses for React consumers"() {
+        // v1.0.2 added these so JSON 404/500 responses to fetch() calls
+        // don't leak Java stack traces and DO include the human message
+        // field that React can render.
+        given:
+        def text = new File(SKELETON, 'grails-app/conf/application.yml').text
+
+        expect:
+        text.contains('include-stacktrace: never')
+        text.contains('include-message: always')
+    }
+
     def "skeleton resources.groovy serves Vite-built /_app/** assets"() {
         given:
         def text = new File(SKELETON, 'grails-app/conf/spring/resources.groovy').text

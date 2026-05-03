@@ -15,7 +15,7 @@ apply plugin: "org.apache.grails.gradle.grails-profile"
 apply plugin: "maven-publish"
 
 group = 'io.github.valentine101'
-version = '1.0.1'
+version = '1.0.2'
 
 // Exclude generated/installed frontend artifacts from the profile JAR.
 // node_modules/ alone bloats the JAR by ~30MB; src/main/resources/public/

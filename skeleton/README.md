@@ -100,6 +100,40 @@ Map it in `UrlMappings.groovy`:
 
 Hit it from React with `fetch('/api/health')` — the Vite dev server proxies `/api/*` to Grails on `:8080`.
 
+## Consuming API errors from React
+
+Spring Boot content-negotiates error responses. When your fetch sends `Accept: application/json` (the default for most HTTP clients), 404s and 500s come back as JSON:
+
+```json
+{
+  "timestamp": "2026-05-02T...",
+  "status": 404,
+  "error": "Not Found",
+  "message": "No endpoint GET /api/missing.",
+  "path": "/api/missing"
+}
+```
+
+Stack traces are stripped (see `server.error.include-stacktrace: never` in `application.yml`), so this shape is safe to render directly in the UI.
+
+A typical React consumer:
+
+```tsx
+async function fetchTodo(id: number) {
+  const res = await fetch(`/api/todos/${id}`, {
+    headers: { 'Accept': 'application/json' }
+  })
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(`${err.status} ${err.error}: ${err.message}`)
+    // → "404 Not Found: No endpoint GET /api/todos/999."
+  }
+  return res.json()
+}
+```
+
+For browser users hitting an unknown URL directly (not via `fetch`), Spring's default Whitelabel HTML page is shown. Override it by adding `grails-app/views/error.html` (or wiring up a custom controller) if you want branded error pages.
+
 ## Why the post-create step
 
 Grails 7's profile system concatenates skeleton files from the inherited web profile and this profile, producing a duplicated `build.gradle` that doesn't compile. To work around that, this profile ships its `build.gradle` as `build.gradle.react`, and `post-create.sh` swaps it into place after `grails create-app` runs. The original `build.gradle` (from the web profile, with a `mavenCentral` typo and no node-gradle wiring) is discarded.

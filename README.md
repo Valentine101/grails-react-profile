@@ -3,7 +3,7 @@
 A Grails 7 application profile that scaffolds a fully-wired **Grails 7 + React 19 + Vite 6 + TypeScript + Tailwind v4** SPA with one command.
 
 ```bash
-grails create-app my-app --profile io.github.valentine101:grails-react:1.0.1
+grails create-app my-app --profile io.github.valentine101:grails-react:1.0.2
 cd my-app && bash post-create.sh
 ./gradlew bootRun       # → http://localhost:8080
 ```
@@ -29,7 +29,7 @@ cd grails-react-profile
 
 ```bash
 cd ~/wherever
-grails create-app my-app --profile io.github.valentine101:grails-react:1.0.1
+grails create-app my-app --profile io.github.valentine101:grails-react:1.0.2
 cd my-app
 bash post-create.sh        # one-time cleanup (see "Why post-create" below)
 ./gradlew build && ./gradlew bootRun
@@ -43,8 +43,8 @@ If you don't want to build from source (e.g. on a fresh machine):
 
 ```bash
 # Download the release zip
-curl -LO https://github.com/Valentine101/grails-react-profile/releases/download/v1.0.1/grails-react-profile-1.0.1.zip
-unzip grails-react-profile-1.0.1.zip
+curl -LO https://github.com/Valentine101/grails-react-profile/releases/download/v1.0.2/grails-react-profile-1.0.2.zip
+unzip grails-react-profile-1.0.2.zip
 cd grails-react-profile-1.0.0
 bash install.sh            # installs the JAR into ~/.m2 via mvn install:install-file
 
@@ -82,7 +82,8 @@ If/when Grails profiles gain proper file-replace semantics (rather than concaten
 ## Roadmap
 
 - **v1.0.0:** initial release
-- **v1.0.1 (this release):** removed `"404"(view:'/notFound')` / `"500"(view:'/error')` mappings from `UrlMappings.groovy` — they referenced GSP views that this profile doesn't ship a runtime for, causing `ServletException` on every 404 (e.g. `/favicon.ico`)
+- **v1.0.1:** removed `"404"(view:'/notFound')` / `"500"(view:'/error')` mappings from `UrlMappings.groovy` — they referenced GSP views that this profile doesn't ship a runtime for, causing `ServletException` on every 404 (e.g. `/favicon.ico`)
+- **v1.0.2 (this release):** hardened error responses for React consumers: added `server.error.include-stacktrace: never` and `include-message: always` to `application.yml` so JSON 404/500s are clean and safe to surface in the UI
 - **v2 (future):** custom `grails set-versions` command for spawn-time version injection
 - **v2 (future):** modular `--features` (e.g. `--features=tailwind,gorm-hibernate5`)
 - **v2 (future):** automated end-to-end smoke test in CI
@@ -93,7 +94,7 @@ If/when Grails profiles gain proper file-replace semantics (rather than concaten
 ./gradlew build              # compiles, runs ProfileSmokeSpec, builds the JAR
 ./gradlew test               # runs ProfileSmokeSpec only
 ./gradlew publishToMavenLocal # installs to ~/.m2
-./gradlew profileBundle      # produces build/distributions/grails-react-profile-1.0.1.zip
+./gradlew profileBundle      # produces build/distributions/grails-react-profile-1.0.2.zip
 ```
 
 `ProfileSmokeSpec` is a structural check — it verifies skeleton files exist with the right substitution tokens, but does NOT exercise `grails create-app` end-to-end. The full smoke test lives in the README's Quick Start section above and should be run manually after any change to the profile.
