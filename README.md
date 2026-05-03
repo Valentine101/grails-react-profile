@@ -3,7 +3,8 @@
 A Grails 7 application profile that scaffolds a fully-wired **Grails 7 + React 19 + Vite 6 + TypeScript + Tailwind v4** SPA with one command.
 
 ```bash
-grails create-app my-app --profile io.github.valentine101:grails-react:1.0.2
+PROFILE_VERSION=1.0.3
+grails create-app my-app --profile io.github.valentine101:grails-react:$PROFILE_VERSION
 cd my-app && bash post-create.sh
 ./gradlew bootRun       # → http://localhost:8080
 ```
@@ -28,8 +29,9 @@ cd grails-react-profile
 ### 2. Spawn a new app
 
 ```bash
+PROFILE_VERSION=1.0.3
 cd ~/wherever
-grails create-app my-app --profile io.github.valentine101:grails-react:1.0.2
+grails create-app my-app --profile io.github.valentine101:grails-react:$PROFILE_VERSION
 cd my-app
 bash post-create.sh        # one-time cleanup (see "Why post-create" below)
 ./gradlew build && ./gradlew bootRun
@@ -42,10 +44,11 @@ Open `http://localhost:8080/` — you should see the styled welcome page.
 If you don't want to build from source (e.g. on a fresh machine):
 
 ```bash
+PROFILE_VERSION=1.0.3
 # Download the release zip
-curl -LO https://github.com/Valentine101/grails-react-profile/releases/download/v1.0.2/grails-react-profile-1.0.2.zip
-unzip grails-react-profile-1.0.2.zip
-cd grails-react-profile-1.0.0
+curl -LO https://github.com/Valentine101/grails-react-profile/releases/download/v$PROFILE_VERSION/grails-react-profile-$PROFILE_VERSION.zip
+unzip grails-react-profile-$PROFILE_VERSION.zip
+cd grails-react-profile-$PROFILE_VERSION
 bash install.sh            # installs the JAR into ~/.m2 via mvn install:install-file
 
 # Then create your app as in step 2 above
@@ -71,11 +74,13 @@ bash install.sh            # installs the JAR into ~/.m2 via mvn install:install
 - `@grails.codegen.defaultPackage@` — Java package (e.g. `my.app`); used in `package` declarations
 - `@grails.codegen.defaultPackage.path@` — same as a slashed path; used in directory names
 
-Versions (Grails, Java, Node, npm, plus the React stack) are pinned in `gradle.properties` and `frontend/package.json` and easy to bump after spawn.
+The profile release version is declared once as `profileVersion` in the root `gradle.properties`, and `build.gradle` uses that value for publishing and bundle names. Generated app toolchain versions (Grails, Java, Node, npm, plus the React stack) live in `skeleton/gradle.properties` and `skeleton/frontend/package.json`.
 
 ## Why the post-create step
 
-Grails 7's profile system concatenates skeleton files from the inherited web profile + this profile, producing a duplicated `build.gradle` that has a `mavenCentral` typo (from the base profile) and the wrong plugin set. To work around this, the profile ships its build configuration as `build.gradle.react`. The `post-create.sh` script swaps it into place and removes itself. One command, then forget it ever existed.
+This profile extends the Grails `base` profile, but it intentionally generates a web based application template using the same Grails web Gradle shape (`grails-web`, WAR packaging, Tomcat, URL mappings, and web testing support) that the original Grails web profile structure provides.
+
+Grails 7's profile system can still create a starter `build.gradle` that is not the React-aware web build this template needs. To work around this, the profile ships its build configuration as `build.gradle.react`. The `post-create.sh` script swaps it into place and removes itself. One command, then forget it ever existed.
 
 If/when Grails profiles gain proper file-replace semantics (rather than concatenation), this step will be removed.
 
@@ -83,7 +88,8 @@ If/when Grails profiles gain proper file-replace semantics (rather than concaten
 
 - **v1.0.0:** initial release
 - **v1.0.1:** removed `"404"(view:'/notFound')` / `"500"(view:'/error')` mappings from `UrlMappings.groovy` — they referenced GSP views that this profile doesn't ship a runtime for, causing `ServletException` on every 404 (e.g. `/favicon.ico`)
-- **v1.0.2 (this release):** hardened error responses for React consumers: added `server.error.include-stacktrace: never` and `include-message: always` to `application.yml` so JSON 404/500s are clean and safe to surface in the UI
+- **v1.0.2:** hardened error responses for React consumers: added `server.error.include-stacktrace: never` and `include-message: always` to `application.yml` so JSON 404/500s are clean and safe to surface in the UI
+- **v1.0.3 (this release):** clarified the base-extended/web-based profile structure, centralized the profile release version, added React build artifacts to generated `.gitignore` files, and fixed the profile smoke tests so Spock specs actually execute
 - **v2 (future):** custom `grails set-versions` command for spawn-time version injection
 - **v2 (future):** modular `--features` (e.g. `--features=tailwind,gorm-hibernate5`)
 - **v2 (future):** automated end-to-end smoke test in CI
@@ -91,13 +97,13 @@ If/when Grails profiles gain proper file-replace semantics (rather than concaten
 ## Development
 
 ```bash
-./gradlew build              # compiles, runs ProfileSmokeSpec, builds the JAR
-./gradlew test               # runs ProfileSmokeSpec only
+./gradlew build              # compiles, runs ProfileSmokeTest, builds the JAR
+./gradlew test               # runs ProfileSmokeTest only
 ./gradlew publishToMavenLocal # installs to ~/.m2
-./gradlew profileBundle      # produces build/distributions/grails-react-profile-1.0.2.zip
+./gradlew profileBundle      # produces build/distributions/grails-react-profile-<profileVersion>.zip
 ```
 
-`ProfileSmokeSpec` is a structural check — it verifies skeleton files exist with the right substitution tokens, but does NOT exercise `grails create-app` end-to-end. The full smoke test lives in the README's Quick Start section above and should be run manually after any change to the profile.
+`ProfileSmokeTest` is a structural check — it verifies skeleton files exist with the right substitution tokens, confirms the React `.gitignore` defaults are packaged, and checks the post-create cleanup script, but does NOT exercise `grails create-app` end-to-end. The full smoke test lives in the README's Quick Start section above and should be run manually after any change to the profile.
 
 ## License
 

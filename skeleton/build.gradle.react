@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven { url "https://repo.grails.org/grails/restricted" }
+        maven { url = uri("https://repo.grails.org/grails/restricted") }
         maven {
            url = 'https://repository.apache.org/content/groups/snapshots'
            content {
@@ -27,7 +27,7 @@ apply plugin:"com.github.node-gradle.node"
 
 repositories {
     mavenCentral()
-    maven { url "https://repo.grails.org/grails/restricted" }
+    maven { url = uri("https://repo.grails.org/grails/restricted") }
     maven {
        url = 'https://repository.apache.org/content/groups/snapshots'
        content {

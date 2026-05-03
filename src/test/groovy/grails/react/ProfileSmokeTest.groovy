@@ -2,6 +2,8 @@ package grails.react
 
 import spock.lang.Specification
 
+import java.util.jar.JarFile
+
 /**
  * Structural smoke checks on the profile's skeleton files.
  *
@@ -10,21 +12,20 @@ import spock.lang.Specification
  * end-to-end — that is the responsibility of the manual smoke test
  * documented in README.md and (eventually) a CI job.
  */
-class ProfileSmokeSpec extends Specification {
+class ProfileSmokeTest extends Specification {
 
     static final File PROJECT_ROOT = new File(System.getProperty('user.dir'))
     static final File SKELETON = new File(PROJECT_ROOT, 'skeleton')
 
     def "skeleton root contains expected files"() {
         expect:
-        // build.gradle.react is the canonical build file (renamed to avoid
-        // concatenation merge with the inherited web profile's build.gradle).
-        // post-create.sh is responsible for moving it into place.
+        // build.gradle.react is the canonical web build file. post-create.sh
+        // moves it into place after Grails creates the starter build.gradle.
         new File(SKELETON, 'build.gradle.react').exists()
         new File(SKELETON, 'post-create.sh').exists()
         new File(SKELETON, 'settings.gradle').exists()
         new File(SKELETON, 'gradle.properties').exists()
-        new File(SKELETON, '.gitignore').exists()
+        new File(SKELETON, 'gitignore.react').exists()
         new File(SKELETON, 'README.md').exists()
     }
 
@@ -45,6 +46,8 @@ class ProfileSmokeSpec extends Specification {
 
         expect:
         text.contains('mv build.gradle.react build.gradle')
+        text.contains('gitignore.react')
+        text.contains('grep -qxF "$pattern" .gitignore')
         text.contains('rm -- "$0"')
     }
 
@@ -125,7 +128,7 @@ class ProfileSmokeSpec extends Specification {
     }
 
     def "UrlMappings does NOT reference GSP error views"() {
-        // Regression guard for v1.0.0 bug: the GSP `/notFound` and `/error`
+        // Regression guard for v1.0.0 bug: GSP `/notFound` and `/error`
         // view mappings caused ServletException on every 404 because this
         // profile doesn't include the GSP runtime. Removed in v1.0.1.
         given:
@@ -190,22 +193,37 @@ class ProfileSmokeSpec extends Specification {
         text.contains('HashRouter')
     }
 
-    def ".gitignore excludes node_modules and Vite build output"() {
+    def "gitignore.react excludes node_modules and Vite build output"() {
         given:
-        def text = new File(SKELETON, '.gitignore').text
+        def text = new File(SKELETON, 'gitignore.react').text
 
         expect:
         text.contains('frontend/node_modules/')
         text.contains('src/main/resources/public/')
     }
 
-    def "profile.yml extends the web profile"() {
+    def "profile JAR includes the React gitignore defaults"() {
+        given:
+        def version = new File(PROJECT_ROOT, 'gradle.properties')
+            .readLines()
+            .find { it.startsWith('profileVersion=') }
+            .split('=', 2)[1]
+        def jar = new File(PROJECT_ROOT, "build/libs/grails-react-${version}.jar")
+
+        expect:
+        jar.exists()
+        new JarFile(jar).withCloseable {
+            it.getEntry('META-INF/grails-profile/skeleton/gitignore.react') != null
+        }
+    }
+
+    def "profile.yml extends base while generated template is web based"() {
         given:
         def text = new File(PROJECT_ROOT, 'profile.yml').text
 
         expect:
         text.contains('name: grails-react')
         text.contains('extends:')
-        text.contains('- web')
+        text.contains('org.apache.grails.profiles:base:7.0.4')
     }
 }

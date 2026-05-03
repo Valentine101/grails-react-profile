@@ -136,6 +136,8 @@ For browser users hitting an unknown URL directly (not via `fetch`), Spring's de
 
 ## Why the post-create step
 
-Grails 7's profile system concatenates skeleton files from the inherited web profile and this profile, producing a duplicated `build.gradle` that doesn't compile. To work around that, this profile ships its `build.gradle` as `build.gradle.react`, and `post-create.sh` swaps it into place after `grails create-app` runs. The original `build.gradle` (from the web profile, with a `mavenCentral` typo and no node-gradle wiring) is discarded.
+This profile extends the Grails `base` profile, but the generated template is web based: it uses the Grails web Gradle plugin, WAR packaging, Tomcat, URL mappings, and web testing support. The build follows the structure Grails web applications originally use, with React/Vite wired into `processResources`.
+
+Grails 7's profile system can still create a starter `build.gradle` that is not the React-aware web build this template needs. To work around that, this profile ships its `build.gradle` as `build.gradle.react`, and `post-create.sh` swaps it into place after `grails create-app` runs.
 
 If/when the Grails profile system gains proper file-replace semantics, this step will go away.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installs the grails-react profile JAR into the local Maven repository (~/.m2)
-# so that `grails create-app myapp --profile io.github.valentine101:grails-react:1.0.0` works.
+# so that `grails create-app myapp --profile io.github.valentine101:grails-react:<version>` works.
 #
 # Usage: ./install.sh
 set -euo pipefail

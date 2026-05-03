@@ -15,7 +15,7 @@ apply plugin: "org.apache.grails.gradle.grails-profile"
 apply plugin: "maven-publish"
 
 group = 'io.github.valentine101'
-version = '1.0.2'
+version = findProperty('profileVersion')
 
 // Exclude generated/installed frontend artifacts from the profile JAR.
 // node_modules/ alone bloats the JAR by ~30MB; src/main/resources/public/
@@ -38,6 +38,13 @@ dependencies {
     testImplementation platform("org.apache.grails:grails-bom:$grailsVersion")
     testImplementation "org.apache.groovy:groovy"
     testImplementation "org.spockframework:spock-core"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    scanForTestClasses = false
+    dependsOn(tasks.named('jar'))
 }
 
 publishing {
@@ -56,17 +63,22 @@ publishing {
 
 // profileBundle: produces a zip containing the profile JAR + install.sh helper
 // for distribution via GitHub releases.
+def releaseDirectoryName = "grails-react-profile-${version}"
+def releaseJarName = "grails-react-${version}.jar"
+
 tasks.register('profileBundle', Zip) {
     dependsOn(tasks.named('jar'))
     archiveBaseName = 'grails-react-profile'
-    archiveVersion = project.version
+    archiveVersion = version
     destinationDirectory = layout.buildDirectory.dir('distributions')
 
-    from(tasks.named('jar').map { it.archiveFile }) {
-        rename { 'grails-react-' + project.version + '.jar' }
+    into(releaseDirectoryName) {
+        from(tasks.named('jar').map { it.archiveFile }) {
+            rename { releaseJarName }
+        }
+        from(layout.projectDirectory.file('install.sh')) {
+            // executable bit preserved
+        }
+        from(layout.projectDirectory.file('README.md'))
     }
-    from(layout.projectDirectory.file('install.sh')) {
-        // executable bit preserved
-    }
-    from(layout.projectDirectory.file('README.md'))
 }

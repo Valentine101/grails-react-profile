@@ -2,9 +2,10 @@
 # Post-create cleanup for the grails-react profile.
 #
 # Why this script exists:
-# Grails 7's profile system concatenates skeleton files from the default web
-# profile + this profile's skeleton, producing a duplicated build.gradle that
-# does not compile (also includes a `mavenCentral` typo from the base profile).
+# This profile extends the Grails base profile, but the generated template is
+# web based and keeps the Gradle structure Grails web applications use. Grails
+# 7's profile system can still produce a starter build.gradle that is not the
+# React-aware web build this template needs.
 # This script replaces the broken merged build.gradle with our intended one
 # and tidies up.
 #
@@ -22,6 +23,15 @@ fi
 
 echo "Replacing merged build.gradle with the React-aware version..."
 mv build.gradle.react build.gradle
+
+if [[ -f gitignore.react ]]; then
+    echo "Adding React build artifacts to .gitignore..."
+    while IFS= read -r pattern; do
+        [[ -z "$pattern" ]] && continue
+        grep -qxF "$pattern" .gitignore || printf '%s\n' "$pattern" >> .gitignore
+    done < gitignore.react
+    rm -- gitignore.react
+fi
 
 echo "Removing post-create.sh..."
 rm -- "$0"
