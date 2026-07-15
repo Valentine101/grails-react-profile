@@ -27,19 +27,21 @@ server:
     error:
         # Spring Boot content-negotiates error responses: HTML for browsers,
         # JSON for `Accept: application/json` (typical fetch/axios). These
-        # settings tighten the JSON shape so React clients can rely on it
-        # without leaking Java stack traces in production.
+        # Never expose exception messages or stack traces by default. The
+        # development environment enables messages for local diagnostics.
         include-stacktrace: never
-        include-message: always
+        include-message: never
 environments:
     development:
+        server:
+            error:
+                include-message: always
         management:
             endpoints:
-                enabled-by-default: true
                 web:
                     base-path: '/actuator'
                     exposure:
-                        include: '*'
+                        include: 'health,info'
     production:
         management:
             endpoints:

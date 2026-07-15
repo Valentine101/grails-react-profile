@@ -1,9 +1,9 @@
 # grails-react
 
-A Grails 7 application profile that scaffolds a fully-wired **Grails 7 + React 19 + Vite 6 + TypeScript + Tailwind v4** SPA with one command.
+A Grails 7 application profile that scaffolds a fully-wired **Grails 7 + React 19 + Vite 6 + TypeScript + Tailwind v4** SPA.
 
 ```bash
-PROFILE_VERSION=1.0.3
+PROFILE_VERSION=1.0.4
 grails create-app my-app --profile io.github.valentine101:grails-react:$PROFILE_VERSION
 cd my-app && bash post-create.sh
 ./gradlew bootRun       # → http://localhost:8080
@@ -29,7 +29,7 @@ cd grails-react-profile
 ### 2. Spawn a new app
 
 ```bash
-PROFILE_VERSION=1.0.3
+PROFILE_VERSION=1.0.4
 cd ~/wherever
 grails create-app my-app --profile io.github.valentine101:grails-react:$PROFILE_VERSION
 cd my-app
@@ -44,7 +44,7 @@ Open `http://localhost:8080/` — you should see the styled welcome page.
 If you don't want to build from source (e.g. on a fresh machine):
 
 ```bash
-PROFILE_VERSION=1.0.3
+PROFILE_VERSION=1.0.4
 # Download the release zip
 curl -LO https://github.com/Valentine101/grails-react-profile/releases/download/v$PROFILE_VERSION/grails-react-profile-$PROFILE_VERSION.zip
 unzip grails-react-profile-$PROFILE_VERSION.zip
@@ -58,9 +58,9 @@ bash install.sh            # installs the JAR into ~/.m2 via mvn install:install
 
 | Layer | Versions / details |
 |---|---|
-| Grails | 7.0.4 on Java 17 |
+| Grails | 7.0.12 on a Gradle-managed Java 17 toolchain |
 | Spring Boot | starter, actuator, tomcat, validation, devtools |
-| Frontend | React 19, React Router 7 (HashRouter), Vite 6, TypeScript 5.8 |
+| Frontend | React 19, React Router 7 (HashRouter), Vite 6, TypeScript 5.9 |
 | Styling | Tailwind v4 via `@tailwindcss/vite` |
 | Build | `node-gradle-plugin` 7.1.0 wires `npmCiInstall` → `buildFrontend` into `processResources` |
 | Asset serving | Vite outputs to `src/main/resources/public/_app/`; a Spring `ResourceHttpRequestHandler` (in `grails-app/conf/spring/resources.groovy`) serves `/_app/**` ahead of Grails URL mappings |
@@ -88,8 +88,9 @@ If/when Grails profiles gain proper file-replace semantics (rather than concaten
 
 - **v1.0.0:** initial release
 - **v1.0.1:** removed `"404"(view:'/notFound')` / `"500"(view:'/error')` mappings from `UrlMappings.groovy` — they referenced GSP views that this profile doesn't ship a runtime for, causing `ServletException` on every 404 (e.g. `/favicon.ico`)
-- **v1.0.2:** hardened error responses for React consumers: added `server.error.include-stacktrace: never` and `include-message: always` to `application.yml` so JSON 404/500s are clean and safe to surface in the UI
-- **v1.0.3 (this release):** clarified the base-extended/web-based profile structure, centralized the profile release version, added React build artifacts to generated `.gitignore` files, and fixed the profile smoke tests so Spock specs actually execute
+- **v1.0.2:** added structured Spring Boot error responses for React consumers
+- **v1.0.3:** clarified the base-extended/web-based profile structure, centralized the profile release version, added React build artifacts to generated `.gitignore` files, and fixed the profile smoke tests so Spock specs actually execute
+- **v1.0.4 (this release):** updated Grails and audited frontend dependencies, restricted error and Actuator exposure, made frontend builds context-path-safe and incrementally correct, enforced the Java toolchain, and tightened URL mappings and asset handling
 - **v2 (future):** custom `grails set-versions` command for spawn-time version injection
 - **v2 (future):** modular `--features` (e.g. `--features=tailwind,gorm-hibernate5`)
 - **v2 (future):** automated end-to-end smoke test in CI

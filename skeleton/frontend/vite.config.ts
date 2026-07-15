@@ -7,7 +7,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/',
+  // Relative asset URLs also work when a WAR is deployed below the server root.
+  base: './',
   build: {
     outDir: '../src/main/resources/public',
     assetsDir: '_app',

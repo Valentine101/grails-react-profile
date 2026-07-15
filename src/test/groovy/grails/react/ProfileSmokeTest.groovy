@@ -38,6 +38,9 @@ class ProfileSmokeTest extends Specification {
         text.contains('com.github.node-gradle.node')
         text.contains("tasks.register('buildFrontend'")
         text.contains("processResources.dependsOn('buildFrontend')")
+        text.contains('languageVersion = JavaLanguageVersion.of(javaVersion.toInteger())')
+        text.contains('frontend/tsconfig.json')
+        text.count('frontend/package-lock.json') == 2
     }
 
     def "post-create.sh moves build.gradle.react into place"() {
@@ -73,15 +76,15 @@ class ProfileSmokeTest extends Specification {
     }
 
     def "skeleton application.yml hardens error responses for React consumers"() {
-        // v1.0.2 added these so JSON 404/500 responses to fetch() calls
-        // don't leak Java stack traces and DO include the human message
-        // field that React can render.
         given:
         def text = new File(SKELETON, 'grails-app/conf/application.yml').text
 
         expect:
         text.contains('include-stacktrace: never')
+        text.contains('include-message: never')
         text.contains('include-message: always')
+        text.contains("include: 'health,info'")
+        !text.contains("include: '*'")
     }
 
     def "skeleton resources.groovy serves Vite-built /_app/** assets"() {
@@ -91,6 +94,7 @@ class ProfileSmokeTest extends Specification {
         expect:
         text.contains('reactAssetsHandler')
         text.contains('/_app/**')
+        text.contains('CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable()')
     }
 
     def "skeleton has package-substituted controller and init paths"() {
@@ -125,6 +129,7 @@ class ProfileSmokeTest extends Specification {
         expect:
         text.contains("'public/index.html'")
         text.contains('Frontend not built')
+        text.contains('stream.withCloseable')
     }
 
     def "UrlMappings does NOT reference GSP error views"() {
@@ -138,6 +143,7 @@ class ProfileSmokeTest extends Specification {
         expect:
         !text.contains("view:'/notFound'")
         !text.contains("view:'/error'")
+        !text.contains('/$controller/$action')
     }
 
     def "frontend skeleton has all expected files"() {
@@ -174,6 +180,7 @@ class ProfileSmokeTest extends Specification {
         expect:
         text.contains("outDir: '../src/main/resources/public'")
         text.contains("assetsDir: '_app'")
+        text.contains("base: './'")
         text.contains("'/api'")
         text.contains('http://localhost:8080')
     }
@@ -224,6 +231,6 @@ class ProfileSmokeTest extends Specification {
         expect:
         text.contains('name: grails-react')
         text.contains('extends:')
-        text.contains('org.apache.grails.profiles:base:7.0.4')
+        text.contains('org.apache.grails.profiles:base:7.0.12')
     }
 }

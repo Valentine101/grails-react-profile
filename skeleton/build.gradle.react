@@ -61,7 +61,11 @@ dependencies {
     testImplementation "org.apache.grails:grails-testing-support-web"
 }
 
-compileJava.options.release = javaVersion.toInteger()
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(javaVersion.toInteger())
+    }
+}
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
@@ -87,7 +91,9 @@ tasks.register('buildFrontend', com.github.gradle.node.npm.task.NpmTask) {
     inputs.dir("${projectDir}/frontend/src")
     inputs.file("${projectDir}/frontend/index.html")
     inputs.file("${projectDir}/frontend/vite.config.ts")
+    inputs.file("${projectDir}/frontend/tsconfig.json")
     inputs.file("${projectDir}/frontend/package.json")
+    inputs.file("${projectDir}/frontend/package-lock.json")
     outputs.dir("${projectDir}/src/main/resources/public")
 }
 

@@ -13,8 +13,8 @@ This swaps in the React-aware `build.gradle` and removes itself.
 
 ## Stack
 
-- **Backend:** Grails 7.0.4 on Java 17
-- **Frontend:** React 19 + React Router 7 + Vite 6 + TypeScript 5.8 + Tailwind v4
+- **Backend:** Grails 7.0.12 on a Gradle-managed Java 17 toolchain
+- **Frontend:** React 19 + React Router 7 + Vite 6 + TypeScript 5.9 + Tailwind v4
 - **Build:** Gradle drives both — `processResources` depends on `buildFrontend`, so a single `./gradlew build` produces a deployable artifact with the React bundle inside
 
 ## Project layout
@@ -102,7 +102,7 @@ Hit it from React with `fetch('/api/health')` — the Vite dev server proxies `/
 
 ## Consuming API errors from React
 
-Spring Boot content-negotiates error responses. When your fetch sends `Accept: application/json` (the default for most HTTP clients), 404s and 500s come back as JSON:
+Spring Boot content-negotiates error responses. When your fetch sends `Accept: application/json`, 404s and 500s come back as JSON. In development, the response includes the exception message for diagnostics:
 
 ```json
 {
@@ -114,7 +114,7 @@ Spring Boot content-negotiates error responses. When your fetch sends `Accept: a
 }
 ```
 
-Stack traces are stripped (see `server.error.include-stacktrace: never` in `application.yml`), so this shape is safe to render directly in the UI.
+Stack traces are always stripped. Exception messages are also hidden by default and enabled only in development; production clients should display their own stable, user-safe message and log a correlation ID instead of rendering server exception text.
 
 A typical React consumer:
 
