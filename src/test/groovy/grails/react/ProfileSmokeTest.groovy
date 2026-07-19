@@ -8,9 +8,8 @@ import java.util.jar.JarFile
  * Structural smoke checks on the profile's skeleton files.
  *
  * These guard against accidental skeleton regressions (missing files,
- * dropped substitution tokens, etc.). They do NOT exercise `grails create-app`
- * end-to-end — that is the responsibility of the manual smoke test
- * documented in README.md and (eventually) a CI job.
+ * dropped substitution tokens, etc.). End-to-end generation is exercised
+ * separately against the locally published profile during release validation.
  */
 class ProfileSmokeTest extends Specification {
 
@@ -19,39 +18,37 @@ class ProfileSmokeTest extends Specification {
 
     def "skeleton root contains expected files"() {
         expect:
-        // build.gradle.react is the canonical web build file. post-create.sh
-        // moves it into place after Grails creates the starter build.gradle.
-        new File(SKELETON, 'build.gradle.react').exists()
-        new File(SKELETON, 'post-create.sh').exists()
+        new File(SKELETON, 'build.gradle').exists()
         new File(SKELETON, 'settings.gradle').exists()
         new File(SKELETON, 'gradle.properties').exists()
-        new File(SKELETON, 'gitignore.react').exists()
+        new File(SKELETON, 'gitignore').exists()
+        new File(SKELETON, '.sdkmanrc').exists()
         new File(SKELETON, 'README.md').exists()
+        new File(SKELETON, 'gradlew').exists()
+        new File(SKELETON, 'gradle/wrapper/gradle-wrapper.jar').exists()
+        new File(SKELETON, 'gradle/wrapper/gradle-wrapper.properties').exists()
+        new File(SKELETON, 'grailsw').exists()
+        new File(SKELETON, 'grails-wrapper.jar').exists()
+        !new File(SKELETON, 'build.gradle.react').exists()
+        !new File(SKELETON, 'post-create.sh').exists()
     }
 
-    def "skeleton build.gradle.react wires the node-gradle plugin and buildFrontend task"() {
+    def "skeleton build.gradle wires the node-gradle plugin and buildFrontend task"() {
         given:
-        def text = new File(SKELETON, 'build.gradle.react').text
+        def text = new File(SKELETON, 'build.gradle').text
 
         expect:
         text.contains('com.github.node-gradle:gradle-node-plugin')
         text.contains('com.github.node-gradle.node')
         text.contains("tasks.register('buildFrontend'")
         text.contains("processResources.dependsOn('buildFrontend')")
-        text.contains('languageVersion = JavaLanguageVersion.of(javaVersion.toInteger())')
+        text.contains("providers.gradleProperty('javaVersion').get().toInteger()")
+        text.contains('languageVersion = JavaLanguageVersion.of(targetJavaVersion)')
+        text.contains('options.release = targetJavaVersion')
+        text.contains('profile "@grails.profile@"')
+        text.contains('spring-boot-starter-jackson')
         text.contains('frontend/tsconfig.json')
         text.count('frontend/package-lock.json') == 2
-    }
-
-    def "post-create.sh moves build.gradle.react into place"() {
-        given:
-        def text = new File(SKELETON, 'post-create.sh').text
-
-        expect:
-        text.contains('mv build.gradle.react build.gradle')
-        text.contains('gitignore.react')
-        text.contains('grep -qxF "$pattern" .gitignore')
-        text.contains('rm -- "$0"')
     }
 
     def "skeleton gradle.properties pins JVM and Node toolchain versions"() {
@@ -59,11 +56,22 @@ class ProfileSmokeTest extends Specification {
         def text = new File(SKELETON, 'gradle.properties').text
 
         expect:
-        text.contains('grailsVersion=')
-        text.contains('javaVersion=')
+        text.contains('grailsVersion=8.0.0-M3')
+        text.contains('javaVersion=21')
         text.contains('nodeVersion=')
         text.contains('npmVersion=')
         text.contains('nodePluginVersion=')
+    }
+
+    def "SDKMAN environment pins Grails M3 and Amazon Corretto 21"() {
+        given:
+        def rootEnvironment = new File(PROJECT_ROOT, '.sdkmanrc').text
+        def appEnvironment = new File(SKELETON, '.sdkmanrc').text
+
+        expect:
+        [rootEnvironment, appEnvironment].every {
+            it.contains('java=21.0.11-amzn') && it.contains('grails=8.0.0-M3')
+        }
     }
 
     def "skeleton application.yml configures the public/ static location"() {
@@ -200,11 +208,13 @@ class ProfileSmokeTest extends Specification {
         text.contains('HashRouter')
     }
 
-    def "gitignore.react excludes node_modules and Vite build output"() {
+    def "generated gitignore excludes Gradle, node_modules, and Vite build output"() {
         given:
-        def text = new File(SKELETON, 'gitignore.react').text
+        def text = new File(SKELETON, 'gitignore').text
 
         expect:
+        text.contains('.gradle')
+        text.contains('build/')
         text.contains('frontend/node_modules/')
         text.contains('src/main/resources/public/')
     }
@@ -220,17 +230,38 @@ class ProfileSmokeTest extends Specification {
         expect:
         jar.exists()
         new JarFile(jar).withCloseable {
-            it.getEntry('META-INF/grails-profile/skeleton/gitignore.react') != null
+            it.getEntry('META-INF/grails-profile/skeleton/.gitignore') != null
         }
     }
 
-    def "profile.yml extends base while generated template is web based"() {
+    def "profile JAR excludes generated local build state"() {
+        given:
+        def version = new File(PROJECT_ROOT, 'gradle.properties')
+            .readLines()
+            .find { it.startsWith('profileVersion=') }
+            .split('=', 2)[1]
+        def jar = new File(PROJECT_ROOT, "build/libs/grails-react-${version}.jar")
+
+        expect:
+        new JarFile(jar).withCloseable {
+            !it.entries().any { entry ->
+                entry.name.startsWith('META-INF/grails-profile/skeleton/.gradle/') ||
+                    entry.name.startsWith('META-INF/grails-profile/skeleton/build/') ||
+                    entry.name.startsWith('META-INF/grails-profile/skeleton/frontend/node_modules/')
+            }
+        }
+    }
+
+    def "profile.yml defines a self-contained executable Grails 8 skeleton"() {
         given:
         def text = new File(PROJECT_ROOT, 'profile.yml').text
 
         expect:
         text.contains('name: grails-react')
-        text.contains('extends:')
-        text.contains('org.apache.grails.profiles:base:7.0.12')
+        text.contains('skeleton:')
+        text.contains('executable:')
+        text.contains('binaryExtensions:')
+        !text.contains('extends:')
+        !text.contains('org.apache.grails.profiles:base')
     }
 }

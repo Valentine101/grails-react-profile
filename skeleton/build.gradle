@@ -2,12 +2,6 @@ buildscript {
     repositories {
         mavenCentral()
         maven { url = uri("https://repo.grails.org/grails/restricted") }
-        maven {
-           url = 'https://repository.apache.org/content/groups/snapshots'
-           content {
-              includeVersionByRegex('org[.]apache[.](grails|groovy).*', '.*', '.*-SNAPSHOT')
-           }
-        }
     }
     dependencies {
         classpath platform("org.apache.grails:grails-bom:$grailsVersion")
@@ -18,6 +12,7 @@ buildscript {
 
 version = "0.1"
 group = "@grails.codegen.defaultPackage@"
+def targetJavaVersion = providers.gradleProperty('javaVersion').get().toInteger()
 
 apply plugin:"eclipse"
 apply plugin:"idea"
@@ -28,12 +23,6 @@ apply plugin:"com.github.node-gradle.node"
 repositories {
     mavenCentral()
     maven { url = uri("https://repo.grails.org/grails/restricted") }
-    maven {
-       url = 'https://repository.apache.org/content/groups/snapshots'
-       content {
-          includeVersionByRegex('org[.]apache[.](grails|groovy).*', '.*', '.*-SNAPSHOT')
-       }
-    }
 }
 
 dependencies {
@@ -46,6 +35,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter"
     implementation "org.apache.grails:grails-core"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-jackson"
     implementation "org.springframework.boot:spring-boot-starter-tomcat"
     implementation "org.apache.grails:grails-web-boot"
     implementation "org.apache.grails:grails-logging"
@@ -54,7 +44,7 @@ dependencies {
     implementation "org.apache.grails:grails-services"
     implementation "org.apache.grails:grails-url-mappings"
     implementation "org.apache.grails:grails-interceptors"
-    profile "org.apache.grails.profiles:web"
+    profile "@grails.profile@"
     runtimeOnly "org.fusesource.jansi:jansi"
     testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.spockframework:spock-core"
@@ -63,8 +53,12 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(javaVersion.toInteger())
+        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = targetJavaVersion
 }
 
 tasks.withType(Test).configureEach {

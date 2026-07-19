@@ -17,10 +17,19 @@ apply plugin: "maven-publish"
 group = 'io.github.valentine101'
 version = findProperty('profileVersion')
 
-// Exclude generated/installed frontend artifacts from the profile JAR.
-// node_modules/ alone bloats the JAR by ~30MB; src/main/resources/public/
-// is the Vite build output that should be regenerated per-app.
+// Gradle's Copy source defaults omit a file literally named `.gitignore`.
+// Store it as `gitignore` in source and restore its name at the archive
+// boundary, after Gradle has already discovered the non-hidden source file.
 tasks.named('jar') {
+    eachFile { details ->
+        if (details.path == 'META-INF/grails-profile/skeleton/gitignore') {
+            details.name = '.gitignore'
+        }
+    }
+
+    // Keep generated local state out of the profile JAR.
+    exclude 'META-INF/grails-profile/skeleton/.gradle/**'
+    exclude 'META-INF/grails-profile/skeleton/build/**'
     exclude 'META-INF/grails-profile/skeleton/frontend/node_modules/**'
     exclude 'META-INF/grails-profile/skeleton/src/main/resources/public/**'
 }
@@ -32,9 +41,6 @@ repositories {
 }
 
 dependencies {
-    profileRuntimeApi platform("org.apache.grails:grails-bom:$grailsVersion")
-    profileRuntimeApi "org.apache.grails.profiles:base"
-
     testImplementation platform("org.apache.grails:grails-bom:$grailsVersion")
     testImplementation "org.apache.groovy:groovy"
     testImplementation "org.spockframework:spock-core"

@@ -9,7 +9,7 @@ function Welcome() {
           Welcome to @grails.app.name@
         </h1>
         <p className="mt-4 text-gray-600 leading-relaxed">
-          Grails 7 + React 19 + Vite 6 + TypeScript + Tailwind v4
+          Grails 8 + React 19 + Vite 6 + TypeScript + Tailwind v4
         </p>
         <p className="mt-6 text-sm text-gray-500">
           Edit <code className="px-1.5 py-0.5 rounded bg-gray-100 text-indigo-700 font-mono text-xs">frontend/src/App.tsx</code> to get started.
